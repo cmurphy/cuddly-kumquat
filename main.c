@@ -6,8 +6,8 @@ int read_tag(char * buffer, size_t max, FILE * fp)
 {
   int index = 0;
   char c;
-  while(index < max && (c = fgetc(fp)) != '\0') {
-    buffer[index] = c;
+  while(index < max) {
+    buffer[index] = fgetc(fp);
     ++index;
   }
   // Get rid of annoying space padding
@@ -45,7 +45,6 @@ int get_id3v1_tags(const char * file, char * title, char * artist, char * album)
   FILE *fp = fopen(file, "r");
   find_start(fp);
   size_t len = 30;
-  char buffer[len];
   read_tag(title, len, fp);
   read_tag(artist, len, fp);
   read_tag(album, len, fp);
