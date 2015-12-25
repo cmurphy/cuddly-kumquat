@@ -50,57 +50,66 @@ void get_id3v1_tags(const char * file, char * title, char * artist, char * album
   fclose(fp);
 }
 
+int find_frame_id(FILE *fp, const char * frame_id)
+{
+  const int max_search = 200;
+  const int frame_id_length = 4;
+  int current;
+  int frame_id_byte_index = 0;
+  while((current = ftell(fp)) < max_search && frame_id_byte_index < frame_id_length) {
+    frame_id_byte_index = 0;
+    char c;
+    while((ftell(fp) - current) < frame_id_length && (c = fgetc(fp) == frame_id[frame_id_byte_index])) {
+      ++frame_id_byte_index;
+    }
+  }
+  if(current == max_search) {
+    printf("Failed to find frame id %s.\n", frame_id);
+    return 1;
+  }
+  return 0;
+}
+
+void eat_garbage(FILE *fp)
+{
+  fgetc(fp); fgetc(fp); // Eat flags
+  fgetc(fp); fgetc(fp); fgetc(fp); // Eat encoding descriptor
+}
+
+void read_frame_body(FILE *fp, int size, char * buffer)
+{
+  int buffer_index = 0;
+  int source_index = 0;
+  while(source_index <= size) {
+    char c = fgetc(fp);
+    if(c != 0) {
+      buffer[buffer_index++] = c;
+    }
+    ++source_index;
+  }
+  buffer[buffer_index] = 0;
+}
+
 void read_id3v23_tag(char * buffer, const char * tag, FILE *fp)
 {
   int read = 0;
   int ind = 0;
-  int size;
   char c;
   int taglen = strlen(tag);
   int maxread = 200;
-  while(read < maxread) {
-    while(ind < taglen) {
-      if((c = fgetc(fp)) != tag[ind]) {
-        ++read;
-        while(ind > 0) {
-          ungetc(c, fp);
-          --read;
-          --ind;
-        }
-        break;
-      }
-      ++ind;
-    }
-    if(ind == taglen) {
-      ind = 0;
-      while(ind < 3) {
-        fgetc(fp);
-        ++ind;
-        ++read;
-      }
-      int size = fgetc(fp);
-      fgetc(fp); fgetc(fp); // Eat flags
-      fgetc(fp); fgetc(fp); fgetc(fp); // Eat encoding descriptor
-      read = read + 6;
-      size = size - 5;
-      ind = 0;
-      int buffer_index = 0;
-      while(ind <= size) {
-        char c = fgetc(fp);
-        if(c != 0) {
-          buffer[buffer_index] = c;
-          ++buffer_index;
-        }
-        ++read;
-        ++ind;
-      }
-      buffer[buffer_index] = 0;
-      break;
-    }
+  int failed = find_frame_id(fp, tag);
+  if(failed) {
+    exit(1);
   }
-  if(read == maxread) {
-    printf("Failed to find tag.");
+  ind = 0;
+  while(ind < 3) {
+    fgetc(fp);
+    ++ind;
+    ++read;
   }
+  int size = fgetc(fp) - 5;
+  eat_garbage(fp);
+  read_frame_body(fp, size, buffer);
 }
 
 void get_id3v23_tags(const char * file, char * title, char * artist, char * album)
