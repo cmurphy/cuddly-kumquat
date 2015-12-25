@@ -46,7 +46,6 @@ void get_id3v1_tags(const char * file, char * title, char * artist, char * album
   read_id3v1_tag(title, len, fp);
   read_id3v1_tag(artist, len, fp);
   read_id3v1_tag(album, len, fp);
-  printf("%s, %s, %s\n", title, artist, album);
   fclose(fp);
 }
 
@@ -63,23 +62,29 @@ int find_frame_id(FILE *fp, const char * frame_id, int frame_id_length)
     }
   }
   if(current == max_search) {
-    printf("Failed to find frame id %s.\n", frame_id);
+    //TODO: turn this into debug logging
+    //printf("Failed to find frame id %s.\n", frame_id);
     return 1;
   }
   return 0;
 }
 
-void eat_garbage(FILE *fp)
+int eat_garbage(FILE *fp)
 {
   fgetc(fp); fgetc(fp); // Eat flags
-  fgetc(fp); fgetc(fp); fgetc(fp); // Eat encoding descriptor
+  int is_unicode = fgetc(fp);
+  if(is_unicode) {
+    fgetc(fp); fgetc(fp); // Eat encoding descriptor
+    return 3;
+  }
+  return 1;
 }
 
 void read_frame_body(FILE *fp, int size, char * buffer)
 {
   int buffer_index = 0;
   int source_index = 0;
-  while(source_index <= size) {
+  while(source_index < size) {
     char c = fgetc(fp);
     if(c != 0) {
       buffer[buffer_index++] = c;
@@ -89,11 +94,11 @@ void read_frame_body(FILE *fp, int size, char * buffer)
   buffer[buffer_index] = 0;
 }
 
-void read_id3v22_tag(char * buffer, const char * tag, FILE *fp)
+int read_id3v22_tag(char * buffer, const char * tag, FILE *fp)
 {
   int failed = find_frame_id(fp, tag, 3);
   if(failed) {
-    exit(1);
+    return 1;
   }
   int ind = 0;
   while(ind < 2) {
@@ -104,43 +109,47 @@ void read_id3v22_tag(char * buffer, const char * tag, FILE *fp)
   fgetc(fp);
   read_frame_body(fp, size, buffer);
   fseek(fp, 0, SEEK_SET);
+  return 0;
 }
 
-void read_id3v23_tag(char * buffer, const char * tag, FILE *fp)
+int read_id3v23_tag(char * buffer, const char * tag, FILE *fp)
 {
   int failed = find_frame_id(fp, tag, 4);
   if(failed) {
-    exit(1);
+    return 1;
   }
   int ind = 0;
   while(ind < 3) {
     fgetc(fp);
     ++ind;
   }
-  int size = fgetc(fp) - 5;
-  eat_garbage(fp);
+  int size = fgetc(fp);
+  size = size - eat_garbage(fp);
   read_frame_body(fp, size, buffer);
   fseek(fp, 0, SEEK_SET);
+  return 0;
 }
 
-void get_id3v22_tags(const char * file, char * title, char * artist, char * album)
+int get_id3v22_tags(const char * file, char * title, char * artist, char * album)
 {
   FILE *fp = fopen(file, "r");
-  read_id3v22_tag(title, "TT2", fp);
-  read_id3v22_tag(artist, "TP1", fp);
-  read_id3v22_tag(album, "TAL", fp);
-  printf("%s, %s, %s\n", title, artist, album);
+  int failed = 1;
+  failed &= read_id3v22_tag(title, "TT2", fp);
+  failed &= read_id3v22_tag(artist, "TP1", fp);
+  failed &= read_id3v22_tag(album, "TAL", fp);
   fclose(fp);
+  return failed;
 }
 
-void get_id3v23_tags(const char * file, char * title, char * artist, char * album)
+int get_id3v23_tags(const char * file, char * title, char * artist, char * album)
 {
   FILE *fp = fopen(file, "r");
-  read_id3v23_tag(title, "TIT2", fp);
-  read_id3v23_tag(artist, "TPE1", fp);
-  read_id3v23_tag(album, "TALB", fp);
-  printf("%s, %s, %s\n", title, artist, album);
+  int failed = 1;
+  failed &= read_id3v23_tag(title, "TIT2", fp);
+  failed &= read_id3v23_tag(artist, "TPE1", fp);
+  failed &= read_id3v23_tag(album, "TALB", fp);
   fclose(fp);
+  return failed;
 }
 
 int is_id3(FILE *fp)
@@ -182,24 +191,32 @@ int get_format(const char * file)
 
 int main(int argc, char ** argv)
 {
-  char title[50];
-  char artist[50];
-  char album[50];
+  char title[50] = "title not found";
+  char artist[50] = "artist not found";
+  char album[50] = "album not found";
   if(argc < 2) {
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
   }
   int format = get_format(argv[1]);
+  int failed = 0;
   switch(format) {
     case 1:
       get_id3v1_tags(argv[1], title, artist, album);
       break;
     case 22:
-      get_id3v22_tags(argv[1], title, artist, album);
+      failed = get_id3v22_tags(argv[1], title, artist, album);
+      if(failed) {
+        get_id3v1_tags(argv[1], title, artist, album);
+      }
       break;
     case 23:
-      get_id3v23_tags(argv[1], title, artist, album);
+      failed = get_id3v23_tags(argv[1], title, artist, album);
+      if(failed) {
+        get_id3v1_tags(argv[1], title, artist, album);
+      }
       break;
   }
+  printf("%s, %s, %s\n", title, artist, album);
   return 0;
 }
