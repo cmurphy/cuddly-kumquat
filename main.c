@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int read_tag(char * buffer, size_t max, FILE * fp)
+int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
 {
   int index = 0;
   while(index < max) {
@@ -16,7 +16,7 @@ int read_tag(char * buffer, size_t max, FILE * fp)
   }
 }
 
-int find_start(FILE * fp)
+int find_id3v1_start(FILE * fp)
 {
   fseek(fp, -3, SEEK_END);
   long int end = ftell(fp);
@@ -41,11 +41,11 @@ int find_start(FILE * fp)
 void get_id3v1_tags(const char * file, char * title, char * artist, char * album)
 {
   FILE *fp = fopen(file, "r");
-  find_start(fp);
+  find_id3v1_start(fp);
   size_t len = 30;
-  read_tag(title, len, fp);
-  read_tag(artist, len, fp);
-  read_tag(album, len, fp);
+  read_id3v1_tag(title, len, fp);
+  read_id3v1_tag(artist, len, fp);
+  read_id3v1_tag(album, len, fp);
   printf("%s, %s, %s\n", title, artist, album);
   fclose(fp);
 }
