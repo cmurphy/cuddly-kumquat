@@ -61,8 +61,6 @@ void read_id3v23_tag(char * buffer, const char * tag, FILE *fp)
   while(read < maxread) {
     while(ind < taglen) {
       if((c = fgetc(fp)) != tag[ind]) {
-        if(c == 'T') {
-        }
         ++read;
         while(ind > 0) {
           ungetc(c, fp);
