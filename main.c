@@ -5,14 +5,12 @@
 int read_tag(char * buffer, size_t max, FILE * fp)
 {
   int index = 0;
-  char c;
   while(index < max) {
     buffer[index] = fgetc(fp);
     ++index;
   }
   // Get rid of annoying space padding
-  if (index == max && c == ' ') {
-    int i;
+  if (index == max && buffer[index-1] == ' ') {
     for(--index; buffer[index] == ' '; --index);
     buffer[index+1] = '\0';
   }
