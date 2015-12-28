@@ -239,9 +239,9 @@ int get_format(const char * file)
 
 int main(int argc, char ** argv)
 {
-  char title[50] = "title not found";
-  char artist[50] = "artist not found";
-  char album[50] = "album not found";
+  char title[100] = "title not found";
+  char artist[100] = "artist not found";
+  char album[100] = "album not found";
   if(argc < 2) {
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
