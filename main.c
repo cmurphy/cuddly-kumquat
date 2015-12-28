@@ -54,11 +54,22 @@ int find_frame_id(FILE *fp, const char * frame_id, int frame_id_length)
   const int max_search = 2000;
   int current;
   int frame_id_byte_index = 0;
+  char * chars_read = malloc(sizeof(char) * (frame_id_length + 1));
   while((current = ftell(fp)) < max_search && frame_id_byte_index < frame_id_length) {
     frame_id_byte_index = 0;
     char c;
-    while((ftell(fp) - current) < frame_id_length && (c = fgetc(fp) == frame_id[frame_id_byte_index])) {
+    while((ftell(fp) - current) < frame_id_length && (c = fgetc(fp)) == frame_id[frame_id_byte_index]) {
+      chars_read[frame_id_byte_index] = c;
       ++frame_id_byte_index;
+    }
+    // There was a partial false positive, so backtrack
+    if(frame_id_byte_index > 0 && frame_id_byte_index < frame_id_length) {
+      ungetc(c, fp);
+      --frame_id_byte_index;
+      while(frame_id_byte_index > 0) {
+        ungetc(chars_read[frame_id_byte_index], fp);
+        --frame_id_byte_index;
+      }
     }
   }
   if(current == max_search) {
