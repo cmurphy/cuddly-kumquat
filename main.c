@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define BUFFER_SIZE 100
+
 int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
 {
   int index = 0;
@@ -98,7 +100,11 @@ void read_frame_body(FILE *fp, int size, char * buffer)
   while(source_index < size) {
     char c = fgetc(fp);
     if(c != 0) {
-      buffer[buffer_index++] = c;
+      if(buffer_index <= BUFFER_SIZE) {
+        buffer[buffer_index++] = c;
+      } else {
+        break;
+      }
     }
     ++source_index;
   }
@@ -239,9 +245,9 @@ int get_format(const char * file)
 
 int main(int argc, char ** argv)
 {
-  char title[100] = "title not found";
-  char artist[100] = "artist not found";
-  char album[100] = "album not found";
+  char title[BUFFER_SIZE] = "title not found";
+  char artist[BUFFER_SIZE] = "artist not found";
+  char album[BUFFER_SIZE] = "album not found";
   if(argc < 2) {
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
