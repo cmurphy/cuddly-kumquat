@@ -198,6 +198,72 @@ int get_id3v24_tags(const char * file, char * title, char * artist, char * album
   return failed;
 }
 
+int find_atom(FILE * fp, const char * atom_name, int parent_size)
+{
+  char buffer[5];
+  int start = ftell(fp);
+  int size;
+  while (1) {
+    fread(&size, sizeof(int), 1, fp);
+    size = ntohl(size);
+    if (size == 0) {
+      continue;
+    }
+    fread(buffer, sizeof(char), 4, fp);
+    if (! strncmp(buffer, atom_name, 4)) {
+      break;
+    } else {
+      fseek(fp, size - 8, SEEK_CUR);
+    }
+    if (ftell(fp) - start > parent_size) {
+      return 1;
+    }
+  }
+  return size;
+}
+
+int seek_ilst(FILE * fp)
+{
+  char atom_name[5] = "\0";
+  int max_scan = 64;
+  int moov_size = find_atom(fp, "moov", max_scan);
+  int udta_size = find_atom(fp, "udta", moov_size);
+  int meta_size = find_atom(fp, "meta", udta_size);
+  int ilst_size = find_atom(fp, "ilst", meta_size);
+  return ilst_size;
+}
+
+int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
+{
+  char atom_name[5] = "\0";
+  int start = ftell(fp);
+  find_atom(fp, tag, ilst_size);
+  // read data
+  int size;
+  fread(&size, sizeof(int), 1, fp);
+  size = ntohl(size);
+  fread(atom_name, sizeof(char), 4, fp);
+  if (strncmp(atom_name, "data", 4)) {
+    printf("No data element!\n");
+    exit(1);
+  }
+  // skip 00 00 00 01 00 00 00 00
+  fseek(fp, 8, SEEK_CUR);
+  read_frame_body(fp, size - 16, buffer);
+}
+
+int get_mp4_tags(const char * file, char * title, char * artist, char * album)
+{
+  FILE *fp = fopen(file, "r");
+  int failed = 1;
+  int ilst_size = seek_ilst(fp);
+  long int ilst_start = ftell(fp);
+  failed &= read_ilst_tag(title, "\xa9nam", ilst_size, fp);
+  failed &= read_ilst_tag(artist, "\xa9""ART", ilst_size, fp);
+  failed &= read_ilst_tag(album, "\xa9""alb", ilst_size, fp);
+  return failed;
+}
+
 int is_id3(FILE *fp)
 {
   fseek(fp, 0, SEEK_SET);
@@ -224,20 +290,45 @@ int is_id3v24(FILE *fp)
   return is_id3(fp) && (fgetc(fp) == 4);
 }
 
+int compare_extension(const char * file, const char * ext)
+{
+
+  int string_length = strlen(file);
+  int ext_length = strlen(ext);
+  return strncmp(file + string_length - ext_length, ext, ext_length);
+}
+
+int is_mp3(const char * file)
+{
+  return compare_extension(file, ".mp3") == 0;
+}
+
+int is_mp4(const char * file)
+{
+  return compare_extension(file, ".mp4") == 0 || compare_extension(file, ".m4a") == 0;
+}
+
 int get_format(const char * file)
 {
   int format = -1;
   FILE *fp = fopen(file, "r");
   // todo - check is_id3 first
   // todo - use consts for format ids
-  if (is_id3v22(fp)) {
-    format = 22;
-  } else if (is_id3v23(fp)) {
-    format = 23;
-  } else if (is_id3v24(fp)) {
-    format = 24;
+  if (is_mp3(file)) {
+    if (is_id3v22(fp)) {
+      format = 22;
+    } else if (is_id3v23(fp)) {
+      format = 23;
+    } else if (is_id3v24(fp)) {
+      format = 24;
+    } else {
+      format = 1;
+    }
+  } else if (is_mp4(file)) {
+    format = 4;
   } else {
-    format = 1;
+    printf("Could not recognize this file.\n");
+    exit(1);
   }
   fclose(fp);
   return format;
@@ -275,6 +366,10 @@ int main(int argc, char ** argv)
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
+      break;
+    case 4:
+      failed = get_mp4_tags(argv[1], title, artist, album);
+      break;
   }
   printf("%s, %s, %s\n", title, artist, album);
   return 0;
