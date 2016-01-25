@@ -224,7 +224,6 @@ int find_atom(FILE * fp, const char * atom_name, int parent_size)
 
 int seek_ilst(FILE * fp)
 {
-  char atom_name[5] = "\0";
   int max_scan = 64;
   int moov_size = find_atom(fp, "moov", max_scan);
   int udta_size = find_atom(fp, "udta", moov_size);
@@ -236,7 +235,6 @@ int seek_ilst(FILE * fp)
 int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
 {
   char atom_name[5] = "\0";
-  int start = ftell(fp);
   find_atom(fp, tag, ilst_size);
   // read data
   int size;
@@ -257,7 +255,6 @@ int get_mp4_tags(const char * file, char * title, char * artist, char * album)
   FILE *fp = fopen(file, "r");
   int failed = 1;
   int ilst_size = seek_ilst(fp);
-  long int ilst_start = ftell(fp);
   failed &= read_ilst_tag(title, "\xa9nam", ilst_size, fp);
   failed &= read_ilst_tag(artist, "\xa9""ART", ilst_size, fp);
   failed &= read_ilst_tag(album, "\xa9""alb", ilst_size, fp);
