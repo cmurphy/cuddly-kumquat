@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #define BUFFER_SIZE 100
 
@@ -16,6 +17,7 @@ int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
     for(--index; buffer[index] == ' '; --index);
     buffer[index+1] = '\0';
   }
+  return 0;
 }
 
 int find_id3v1_start(FILE * fp)
@@ -235,7 +237,9 @@ int seek_ilst(FILE * fp)
 int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
 {
   char atom_name[5] = "\0";
-  find_atom(fp, tag, ilst_size);
+  if (! find_atom(fp, tag, ilst_size)) {
+    return 1;
+  }
   // read data
   int size;
   fread(&size, sizeof(int), 1, fp);
@@ -248,6 +252,7 @@ int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
   // skip 00 00 00 01 00 00 00 00
   fseek(fp, 8, SEEK_CUR);
   read_frame_body(fp, size - 16, buffer);
+  return 0;
 }
 
 int get_mp4_tags(const char * file, char * title, char * artist, char * album)
