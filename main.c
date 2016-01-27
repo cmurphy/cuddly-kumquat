@@ -246,8 +246,7 @@ int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
   size = ntohl(size);
   fread(atom_name, sizeof(char), 4, fp);
   if (strncmp(atom_name, "data", 4)) {
-    printf("No data element!\n");
-    exit(1);
+    return 1;
   }
   // skip 00 00 00 01 00 00 00 00
   fseek(fp, 8, SEEK_CUR);
