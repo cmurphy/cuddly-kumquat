@@ -21,6 +21,6 @@ Get metadata from one song::
 
 Get metadata from a directory::
 
-  find /mnt/dib/ -exec printf "%s:" '{}' \; -exec ./mm '{}' \;
+  find /music -exec printf "%s:" '{}' \; -exec ./mm '{}' \;
 
 You can use similar scripts to sort, filter, and copy files.
