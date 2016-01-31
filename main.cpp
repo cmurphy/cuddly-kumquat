@@ -7,7 +7,7 @@
 
 int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
 {
-  int index = 0;
+  size_t index = 0;
   while(index < max) {
     buffer[index] = fgetc(fp);
     ++index;
@@ -58,7 +58,7 @@ int find_frame_id(FILE *fp, const char * frame_id, int frame_id_length)
   const int max_search = 2000;
   int current;
   int frame_id_byte_index = 0;
-  char * chars_read = malloc(sizeof(char) * (frame_id_length + 1));
+  char * chars_read = (char*)malloc(sizeof(char) * (frame_id_length + 1));
   while((current = ftell(fp)) < max_search && frame_id_byte_index < frame_id_length) {
     frame_id_byte_index = 0;
     char c;

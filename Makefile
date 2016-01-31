@@ -1,4 +1,4 @@
 all: mm
 
-mm: main.c
-	gcc -Wall main.c -o mm
+mm: main.cpp
+	g++ -Wall main.cpp -o mm
