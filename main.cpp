@@ -315,8 +315,6 @@ int get_format(const char * file)
 {
   int format = -1;
   FILE *fp = fopen(file, "r");
-  // todo - check is_id3 first
-  // todo - use consts for format ids
   if (is_mp3(file)) {
     if (is_id3v22(fp)) {
       format = ID3V22;
