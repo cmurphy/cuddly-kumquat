@@ -5,6 +5,8 @@
 
 #define BUFFER_SIZE 100
 
+enum Format { ID3V1, ID3V22, ID3V23, ID3V24, MP4 };
+
 int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
 {
   size_t index = 0;
@@ -317,16 +319,16 @@ int get_format(const char * file)
   // todo - use consts for format ids
   if (is_mp3(file)) {
     if (is_id3v22(fp)) {
-      format = 22;
+      format = ID3V22;
     } else if (is_id3v23(fp)) {
-      format = 23;
+      format = ID3V23;
     } else if (is_id3v24(fp)) {
-      format = 24;
+      format = ID3V24;
     } else {
-      format = 1;
+      format = ID3V1;
     }
   } else if (is_mp4(file)) {
-    format = 4;
+    format = MP4;
   } else {
     printf("Could not recognize this file.\n");
     exit(1);
@@ -344,31 +346,31 @@ int main(int argc, char ** argv)
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
   }
-  int format = get_format(argv[1]);
+  Format format = (Format)get_format(argv[1]);
   int failed = 0;
   switch(format) {
-    case 1:
+    case ID3V1:
       get_id3v1_tags(argv[1], title, artist, album);
       break;
-    case 22:
+    case ID3V22:
       failed = get_id3v22_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case 23:
+    case ID3V23:
       failed = get_id3v23_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case 24:
+    case ID3V24:
       failed = get_id3v24_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case 4:
+    case MP4:
       failed = get_mp4_tags(argv[1], title, artist, album);
       break;
   }
