@@ -301,22 +301,14 @@ int is_id3v24(FILE *fp)
   return is_id3(fp) && (fgetc(fp) == 4);
 }
 
-int compare_extension(const char * file, const char * ext)
+int is_mp3(File * file)
 {
-
-  int string_length = strlen(file);
-  int ext_length = strlen(ext);
-  return strncmp(file + string_length - ext_length, ext, ext_length);
+  return file->container_type() == Container::MP3;
 }
 
-int is_mp3(const char * file)
+int is_mp4(File * file)
 {
-  return compare_extension(file, ".mp3") == 0;
-}
-
-int is_mp4(const char * file)
-{
-  return compare_extension(file, ".mp4") == 0 || compare_extension(file, ".m4a") == 0;
+  return file->container_type() == Container::MP4;
 }
 
 int get_format(const char * file)
@@ -324,7 +316,7 @@ int get_format(const char * file)
   int format = -1;
   File * song_file = new File(file);
   FILE * fp = song_file->get_file_pointer();
-  if (is_mp3(file)) {
+  if (is_mp3(song_file)) {
     if (is_id3v22(fp)) {
       format = ID3V22;
     } else if (is_id3v23(fp)) {
@@ -334,7 +326,7 @@ int get_format(const char * file)
     } else {
       format = ID3V1;
     }
-  } else if (is_mp4(file)) {
+  } else if (is_mp4(song_file)) {
     format = MP4;
   } else {
     printf("Could not recognize this file.\n");
