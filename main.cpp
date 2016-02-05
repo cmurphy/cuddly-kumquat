@@ -3,6 +3,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#include "file.h"
+
 #define BUFFER_SIZE 100
 
 enum Format { ID3V1, ID3V22, ID3V23, ID3V24, MP4 };
@@ -46,13 +48,14 @@ int find_id3v1_start(FILE * fp)
 
 void get_id3v1_tags(const char * file, char * title, char * artist, char * album)
 {
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE * fp = song_file->get_file_pointer();
   find_id3v1_start(fp);
   size_t len = 30;
   read_id3v1_tag(title, len, fp);
   read_id3v1_tag(artist, len, fp);
   read_id3v1_tag(album, len, fp);
-  fclose(fp);
+  delete song_file;
 }
 
 int find_frame_id(FILE *fp, const char * frame_id, int frame_id_length)
@@ -171,34 +174,37 @@ int read_id3v24_tag(char * buffer, const char * tag, FILE *fp)
 
 int get_id3v22_tags(const char * file, char * title, char * artist, char * album)
 {
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE * fp = song_file -> get_file_pointer();
   int failed = 1;
   failed &= read_id3v22_tag(title, "TT2", fp);
   failed &= read_id3v22_tag(artist, "TP1", fp);
   failed &= read_id3v22_tag(album, "TAL", fp);
-  fclose(fp);
+  delete song_file;
   return failed;
 }
 
 int get_id3v23_tags(const char * file, char * title, char * artist, char * album)
 {
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE *fp = song_file->get_file_pointer();
   int failed = 1;
   failed &= read_id3v23_tag(title, "TIT2", fp);
   failed &= read_id3v23_tag(artist, "TPE1", fp);
   failed &= read_id3v23_tag(album, "TALB", fp);
-  fclose(fp);
+  delete song_file;
   return failed;
 }
 
 int get_id3v24_tags(const char * file, char * title, char * artist, char * album)
 {
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE *fp = song_file->get_file_pointer();
   int failed = 1;
   failed &= read_id3v24_tag(title, "TIT2", fp);
   failed &= read_id3v24_tag(artist, "TPE1", fp);
   failed &= read_id3v24_tag(album, "TALB", fp);
-  fclose(fp);
+  delete song_file;
   return failed;
 }
 
@@ -258,12 +264,14 @@ int read_ilst_tag(char * buffer, const char * tag, int ilst_size, FILE * fp)
 
 int get_mp4_tags(const char * file, char * title, char * artist, char * album)
 {
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE *fp = song_file->get_file_pointer();
   int failed = 1;
   int ilst_size = seek_ilst(fp);
   failed &= read_ilst_tag(title, "\xa9nam", ilst_size, fp);
   failed &= read_ilst_tag(artist, "\xa9""ART", ilst_size, fp);
   failed &= read_ilst_tag(album, "\xa9""alb", ilst_size, fp);
+  delete song_file;
   return failed;
 }
 
@@ -314,7 +322,8 @@ int is_mp4(const char * file)
 int get_format(const char * file)
 {
   int format = -1;
-  FILE *fp = fopen(file, "r");
+  File * song_file = new File(file);
+  FILE * fp = song_file->get_file_pointer();
   if (is_mp3(file)) {
     if (is_id3v22(fp)) {
       format = ID3V22;
@@ -331,7 +340,7 @@ int get_format(const char * file)
     printf("Could not recognize this file.\n");
     exit(1);
   }
-  fclose(fp);
+  delete song_file;
   return format;
 }
 
