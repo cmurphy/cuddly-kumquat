@@ -1,7 +1,20 @@
 #include <iostream>
 #include <string>
 
-enum class Container { ERROR = -1, MP3, MP4 };
+enum class Container {
+  ERROR = -1,
+  MP3,
+  MP4
+};
+
+enum class MetadataFormat {
+  ERROR = -1,
+  ID3V1,
+  ID3V2_2,
+  ID3V2_3,
+  ID3V2_4,
+  MPEG4
+};
 
 class File
 {
@@ -15,6 +28,6 @@ class File
     File(std::string & file_path);
     ~File();
     Container container_type();
-    int metadata_type();
+    MetadataFormat metadata_type();
     FILE * get_file_pointer();
 };

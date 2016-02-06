@@ -7,8 +7,6 @@
 
 #define BUFFER_SIZE 100
 
-enum Format { ID3V1, ID3V22, ID3V23, ID3V24, MP4 };
-
 int read_id3v1_tag(char * buffer, size_t max, FILE * fp)
 {
   size_t index = 0;
@@ -275,63 +273,10 @@ int get_mp4_tags(const char * file, char * title, char * artist, char * album)
   return failed;
 }
 
-int is_id3(FILE *fp)
+MetadataFormat get_format(const char * file)
 {
-  fseek(fp, 0, SEEK_SET);
-  char buffer[4];
-  fgets(buffer, 4, fp);
-  if (strcmp(buffer, "ID3") == 0) {
-    return 1;
-  }
-  return 0;
-}
-
-int is_id3v22(FILE *fp)
-{
-  return is_id3(fp) && (fgetc(fp) == 2);
-}
-
-int is_id3v23(FILE *fp)
-{
-  return is_id3(fp) && (fgetc(fp) == 3);
-}
-
-int is_id3v24(FILE *fp)
-{
-  return is_id3(fp) && (fgetc(fp) == 4);
-}
-
-int is_mp3(File * file)
-{
-  return file->container_type() == Container::MP3;
-}
-
-int is_mp4(File * file)
-{
-  return file->container_type() == Container::MP4;
-}
-
-int get_format(const char * file)
-{
-  int format = -1;
   File * song_file = new File(file);
-  FILE * fp = song_file->get_file_pointer();
-  if (is_mp3(song_file)) {
-    if (is_id3v22(fp)) {
-      format = ID3V22;
-    } else if (is_id3v23(fp)) {
-      format = ID3V23;
-    } else if (is_id3v24(fp)) {
-      format = ID3V24;
-    } else {
-      format = ID3V1;
-    }
-  } else if (is_mp4(song_file)) {
-    format = MP4;
-  } else {
-    printf("Could not recognize this file.\n");
-    exit(1);
-  }
+  MetadataFormat format = song_file->metadata_type();
   delete song_file;
   return format;
 }
@@ -345,33 +290,36 @@ int main(int argc, char ** argv)
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
   }
-  Format format = (Format)get_format(argv[1]);
+  MetadataFormat format = get_format(argv[1]);
   int failed = 0;
   switch(format) {
-    case ID3V1:
+    case MetadataFormat::ID3V1:
       get_id3v1_tags(argv[1], title, artist, album);
       break;
-    case ID3V22:
+    case MetadataFormat::ID3V2_2:
       failed = get_id3v22_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case ID3V23:
+    case MetadataFormat::ID3V2_3:
       failed = get_id3v23_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case ID3V24:
+    case MetadataFormat::ID3V2_4:
       failed = get_id3v24_tags(argv[1], title, artist, album);
       if(failed) {
         get_id3v1_tags(argv[1], title, artist, album);
       }
       break;
-    case MP4:
+    case MetadataFormat::MPEG4:
       failed = get_mp4_tags(argv[1], title, artist, album);
       break;
+    case MetadataFormat::ERROR:
+      printf("Could not recognize this file.\n");
+      exit(1);
   }
   printf("%s, %s, %s\n", title, artist, album);
   return 0;
