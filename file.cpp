@@ -1,5 +1,5 @@
-#include <string.h>
 #include "file.h"
+#include <string.h>
 
 File::File(const char * file_path)
 {

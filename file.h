@@ -1,3 +1,6 @@
+#ifndef FILE_H
+#define FILE_H
+
 #include <iostream>
 #include <string>
 
@@ -24,10 +27,11 @@ class File
     unsigned char * format_header;
     int compare_extension(const std::string & extension);
   public:
-    File(const char * file_path);
-    File(std::string & file_path);
+    explicit File(const char * file_path);
+    explicit File(std::string & file_path);
     ~File();
     Container container_type();
     MetadataFormat metadata_type();
     FILE * get_file_pointer();
 };
+#endif
