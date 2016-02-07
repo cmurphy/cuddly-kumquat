@@ -1,4 +1,4 @@
 all: mm
 
-mm: file.cpp main.cpp
-	g++ -std=c++11 -Wall file.cpp main.cpp -o mm
+mm: file.cpp song.cpp main.cpp
+	g++ -g -std=c++11 -Wall file.cpp song.cpp main.cpp -o mm
