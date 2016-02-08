@@ -72,4 +72,20 @@ class Id3v2_4: public Id3v2
     int read_frame(char * buffer, const char * tag);
     int read_frames(char * title, char * artist, char * album);
 };
+
+class Mp4: public Song
+{
+  private:
+    int ilst_size;
+    int seek_ilst();
+  protected:
+    int read_frame_body(std::string & buffer, int size);
+  public:
+    explicit Mp4(File * media_file): Song(media_file) {};
+    ~Mp4() {};
+    int find_atom(const char * atom_name, int parent_size);
+    int read_frame(char * buffer, const char * tag) { return 0; };
+    int read_frame(char * buffer, const char * tag, int ilst_size);
+    int read_frames(char * title, char * artist, char * album);
+};
 #endif
