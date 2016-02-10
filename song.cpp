@@ -59,7 +59,8 @@ int Id3v2::eat_garbage()
 int Id3v2::eat_frame_header(const char * frame_id, int frame_id_length)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
-  const int max_search = 2000;
+  int start = ftell(fp);
+  const int max_search = 500000;
   int current;
   int frame_id_byte_index = 0;
   char * chars_read = (char*)malloc(sizeof(char) * (frame_id_length + 1));
@@ -83,6 +84,7 @@ int Id3v2::eat_frame_header(const char * frame_id, int frame_id_length)
   if(current == max_search) {
     //TODO: turn this into debug logging
     //printf("Failed to find frame id %s.\n", frame_id);
+    fseek(fp, start, SEEK_SET);
     return 1;
   }
   return 0;
