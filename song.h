@@ -9,7 +9,7 @@ class Song
     std::string title;
     std::string artist;
     std::string album;
-    virtual int read_frame_body(std::string & buffer, int size) = 0;
+    int read_frame_body(std::string & buffer, int size);
   public:
     File * media_file;
     explicit Song(File * media_file);
@@ -22,8 +22,6 @@ class Song
 
 class Id3v1: public Song
 {
-  protected:
-    int read_frame_body(std::string & buffer, int size);
   public:
     ~Id3v1() {};
     explicit Id3v1(File * media_file): Song(media_file) {};
@@ -35,7 +33,6 @@ class Id3v2: public Song
 {
   protected:
     int eat_garbage();
-    int read_frame_body(std::string & buffer, int size);
   public:
     explicit Id3v2(File * media_file): Song(media_file) {};
     ~Id3v2() {};
@@ -76,8 +73,6 @@ class Mp4: public Song
   private:
     int ilst_size;
     int seek_ilst();
-  protected:
-    int read_frame_body(std::string & buffer, int size);
   public:
     explicit Mp4(File * media_file): Song(media_file) {};
     ~Mp4() {};

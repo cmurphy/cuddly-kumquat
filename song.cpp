@@ -14,21 +14,31 @@ Song::~Song()
 
 }
 
-int Id3v1::read_frame_body(std::string & body, int max)
+int Song::read_frame_body(std::string & body, int size)
 {
-  char * buffer = new char[max];
+  char * buffer = new char[size+1];
   FILE * fp = (this->media_file)->get_file_pointer();
-  int index = 0;
-  while(index < max) {
-    buffer[index] = fgetc(fp);
-    ++index;
+  int buffer_index = 0;
+  int source_index = 0;
+  while(source_index < size) {
+    char c = fgetc(fp);
+    if(c != 0) {
+      if(buffer_index <= BUFFER_SIZE) {
+        buffer[buffer_index++] = c;
+      } else {
+        break;
+      }
+    }
+    ++source_index;
   }
   // Get rid of annoying space padding
-  if (index == max && buffer[index-1] == ' ') {
-    for(--index; buffer[index] == ' '; --index);
-    buffer[index+1] = '\0';
+  if (buffer_index == size && buffer[buffer_index-1] == ' ') {
+    for(--buffer_index; buffer[buffer_index] == ' '; --buffer_index);
+    ++buffer_index;
   }
+  buffer[buffer_index] = 0;
   body = buffer;
+  delete[] buffer;
   return 0;
 }
 
@@ -126,7 +136,7 @@ int Id3v2_3::read_frame(char * buffer, const char * tag)
   int size = fgetc(fp);
   size = size - this->eat_garbage();
   std::string body;
-  read_frame_body(body, size);
+  this->read_frame_body(body, size);
   strcpy(buffer, body.c_str());
   fseek(fp, 0, SEEK_SET);
   return 0;
@@ -150,29 +160,6 @@ int Id3v2_4::read_frame(char * buffer, const char * tag)
   this->read_frame_body(body, size);
   strcpy(buffer, body.c_str());
   fseek(fp, 0, SEEK_SET);
-  return 0;
-}
-
-int Id3v2::read_frame_body(std::string & body, int size)
-{
-  char * buffer = new char[size+1];
-  FILE * fp = (this->media_file)->get_file_pointer();
-  int buffer_index = 0;
-  int source_index = 0;
-  while(source_index < size) {
-    char c = fgetc(fp);
-    if(c != 0) {
-      if(buffer_index <= BUFFER_SIZE) {
-        buffer[buffer_index++] = c;
-      } else {
-        break;
-      }
-    }
-    ++source_index;
-  }
-  buffer[buffer_index] = 0;
-  body = buffer;
-  delete[] buffer;
   return 0;
 }
 
@@ -201,29 +188,6 @@ int Id3v2_4::read_frames(char * title, char * artist, char * album)
   failed &= this->read_frame(artist, "TPE1");
   failed &= this->read_frame(album, "TALB");
   return failed;
-}
-
-int Mp4::read_frame_body(std::string & body, int size)
-{
-  char * buffer = new char[size+1];
-  FILE *fp = (this->media_file)->get_file_pointer();
-  int buffer_index = 0;
-  int source_index = 0;
-  while(source_index < size) {
-    char c = fgetc(fp);
-    if(c != 0) {
-      if(buffer_index <= BUFFER_SIZE) {
-        buffer[buffer_index++] = c;
-      } else {
-        break;
-      }
-    }
-    ++source_index;
-  }
-  buffer[buffer_index] = 0;
-  body = buffer;
-  delete[] buffer;
-  return 0;
 }
 
 int Mp4::find_atom(const char * atom_name, int parent_size)
