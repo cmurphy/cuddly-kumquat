@@ -14,29 +14,6 @@ Song::~Song()
 
 }
 
-int Id3v1::find_start()
-{
-  FILE * fp = (this->media_file)->get_file_pointer();
-  fseek(fp, -3, SEEK_END);
-  long int end = ftell(fp);
-  int max_read = 200;
-  while(end - ftell(fp) < max_read) {
-    char c;
-    if((c = fgetc(fp)) == 'T') {
-      if((c = fgetc(fp)) == 'A') {
-        if((c = fgetc(fp)) == 'G') {
-          return 0;
-        }
-        ungetc(c, fp);
-      }
-      ungetc(c, fp);
-    }
-    ungetc(c, fp);
-    fseek(fp, -1, SEEK_CUR);
-  }
-  return 1;
-}
-
 int Id3v1::read_frame_body(std::string & body, int max)
 {
   char * buffer = new char[max];
@@ -57,7 +34,6 @@ int Id3v1::read_frame_body(std::string & body, int max)
 
 int Id3v1::read_frames(char * title, char * artist, char * album)
 {
-  this->find_start();
   size_t len = 30;
   this->read_frame_body(this->title, len);
   this->read_frame_body(this->artist, len);

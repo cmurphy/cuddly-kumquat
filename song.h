@@ -22,8 +22,6 @@ class Song
 
 class Id3v1: public Song
 {
-  private:
-    int find_start();
   protected:
     int read_frame_body(std::string & buffer, int size);
   public:

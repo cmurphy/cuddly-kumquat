@@ -61,7 +61,13 @@ MetadataFormat File::metadata_type()
       }
     } else {
       // TODO: check for TAG at SEEK_END-128
-      return MetadataFormat::ID3V1;
+      fseek(this->get_file_pointer(), -128, SEEK_END);
+      fgets(buffer, 4, this->get_file_pointer());
+      if (strncmp(buffer, "TAG", 3) == 0) {
+        return MetadataFormat::ID3V1;
+      } else {
+        return MetadataFormat::ERROR;
+      }
     }
   } else if (container == Container::MP4) {
     return MetadataFormat::MPEG4;
