@@ -103,27 +103,27 @@ int Id3v2::eat_frame_header(const char * frame_id)
 
 int Id3v2_2::get_frame_size(FILE * fp)
 {
-  int i = 0;
-  while(i++ < 2) fgetc(fp);
-  int size = fgetc(fp) - 1;
-  fgetc(fp);
+  int size = 0;
+  fread(&size, 3, 1, fp);
+  size = ntohl(size);
+  size >>= 8;
   return size;
 }
 
 int Id3v2_3::get_frame_size(FILE * fp)
 {
-  int i = 0;
-  while(i++ < 3) fgetc(fp);
-  int size = fgetc(fp);
+  int size = 0;
+  fread(&size, 4, 1, fp);
+  size = ntohl(size);
   size = size - this->eat_garbage();
   return size;
 }
 
 int Id3v2_4::get_frame_size(FILE * fp)
 {
-  int i = 0;
-  while(i++ < 3) fgetc(fp);
-  int size = fgetc(fp);
+  int size = 0;
+  fread(&size, 4, 1, fp);
+  size = ntohl(size);
   size = size - this->eat_garbage();
   return size;
 }
