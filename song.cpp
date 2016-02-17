@@ -112,7 +112,7 @@ int Id3v2_2::read_frame(char * buffer, const char * tag)
     fgetc(fp);
     ++ind;
   }
-  int size = fgetc(fp) - 2;
+  int size = fgetc(fp) - 1;
   fgetc(fp);
   std::string body;
   this->read_frame_body(body, size);
