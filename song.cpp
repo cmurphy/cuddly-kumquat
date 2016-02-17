@@ -54,18 +54,6 @@ int Id3v1::read_frames(char * title, char * artist, char * album)
   return 0;
 }
 
-int Id3v2::eat_garbage()
-{
-  FILE * fp = (this->media_file)->get_file_pointer();
-  fgetc(fp); fgetc(fp); // Eat flags
-  int is_unicode = fgetc(fp);
-  if(is_unicode == 1) {
-    fgetc(fp); fgetc(fp); // Eat encoding descriptor
-    return 3;
-  }
-  return 1;
-}
-
 int Id3v2::eat_frame_header(const char * frame_id)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
@@ -110,13 +98,44 @@ int Id3v2_2::get_frame_size(FILE * fp)
   return size;
 }
 
+void Id3v2_2::get_frame_flags(FILE * fp)
+{
+  // ID3v2.2 does not have any flag bytes
+  return;
+}
+
+int Id3v2_2::get_unicode_encoding(FILE * fp)
+{
+  // Read either 00 or 01 indicating non-Unicode or Unicode
+  // We don't do anything with this information for now
+  fgetc(fp);
+  return 1;
+}
+
 int Id3v2_3::get_frame_size(FILE * fp)
 {
   int size = 0;
   fread(&size, 4, 1, fp);
   size = ntohl(size);
-  size = size - this->eat_garbage();
   return size;
+}
+
+void Id3v2_3::get_frame_flags(FILE * fp)
+{
+  // ID3v2.3 has two flag bytes
+  // We don't do anything with this information for now
+  fgetc(fp); fgetc(fp);
+}
+
+int Id3v2_3::get_unicode_encoding(FILE * fp)
+{
+  int is_unicode = fgetc(fp);
+  // If we're in Unicode, there are two more bytes indicating the unicode BOM
+  if(is_unicode == 1) {
+    fgetc(fp); fgetc(fp);
+    return 3;
+  }
+  return 1;
 }
 
 int Id3v2_4::get_frame_size(FILE * fp)
@@ -124,8 +143,25 @@ int Id3v2_4::get_frame_size(FILE * fp)
   int size = 0;
   fread(&size, 4, 1, fp);
   size = ntohl(size);
-  size = size - this->eat_garbage();
   return size;
+}
+
+void Id3v2_4::get_frame_flags(FILE * fp)
+{
+  // ID3v2.3 has two flag bytes
+  // We don't do anything with this information for now
+  fgetc(fp); fgetc(fp);
+}
+
+int Id3v2_4::get_unicode_encoding(FILE * fp)
+{
+  int is_unicode = fgetc(fp);
+  // If we're in Unicode, there are two more bytes indicating the unicode BOM
+  if(is_unicode == 1) {
+    fgetc(fp); fgetc(fp);
+    return 3;
+  }
+  return 1;
 }
 
 int Id3v2::read_frame(char * buffer, const char * tag)
@@ -136,6 +172,8 @@ int Id3v2::read_frame(char * buffer, const char * tag)
     return 1;
   }
   int size = this->get_frame_size(fp);
+  this->get_frame_flags(fp);
+  size -= this->get_unicode_encoding(fp);
   std::string body;
   this->read_frame_body(body, size);
   strcpy(buffer, body.c_str());

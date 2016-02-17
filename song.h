@@ -30,7 +30,8 @@ class Id3v1: public Song
 class Id3v2: public Song
 {
   protected:
-    int eat_garbage();
+    virtual void get_frame_flags(FILE * fp) = 0;
+    virtual int get_unicode_encoding(FILE * fp) = 0;
   public:
     explicit Id3v2(File * media_file): Song(media_file) {};
     ~Id3v2() {};
@@ -42,6 +43,9 @@ class Id3v2: public Song
 
 class Id3v2_2: public Id3v2
 {
+  protected:
+    void get_frame_flags(FILE * fp);
+    int get_unicode_encoding(FILE * fp);
   public:
     explicit Id3v2_2(File * media_file): Id3v2(media_file) {};
     ~Id3v2_2() {};
@@ -51,6 +55,9 @@ class Id3v2_2: public Id3v2
 
 class Id3v2_3: public Id3v2
 {
+  protected:
+    void get_frame_flags(FILE * fp);
+    int get_unicode_encoding(FILE * fp);
   public:
     explicit Id3v2_3(File * media_file): Id3v2(media_file) {};
     ~Id3v2_3() {};
@@ -60,6 +67,9 @@ class Id3v2_3: public Id3v2
 
 class Id3v2_4: public Id3v2
 {
+  protected:
+    void get_frame_flags(FILE * fp);
+    int get_unicode_encoding(FILE * fp);
   public:
     explicit Id3v2_4(File * media_file): Id3v2(media_file) {};
     ~Id3v2_4() {};
