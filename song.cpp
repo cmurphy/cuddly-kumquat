@@ -66,11 +66,12 @@ int Id3v2::eat_garbage()
   return 1;
 }
 
-int Id3v2::eat_frame_header(const char * frame_id, int frame_id_length)
+int Id3v2::eat_frame_header(const char * frame_id)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
   int start = ftell(fp);
   const int max_search = 500000;
+  int frame_id_length = strlen(frame_id);
   int current;
   int frame_id_byte_index = 0;
   char * chars_read = (char*)malloc(sizeof(char) * (frame_id_length + 1));
@@ -100,62 +101,41 @@ int Id3v2::eat_frame_header(const char * frame_id, int frame_id_length)
   return 0;
 }
 
-int Id3v2_2::read_frame(char * buffer, const char * tag)
+int Id3v2_2::get_frame_size(FILE * fp)
 {
-  FILE * fp = (this->media_file)->get_file_pointer();
-  int failed = this->eat_frame_header(tag, 3);
-  if(failed) {
-    return 1;
-  }
-  int ind = 0;
-  while(ind < 2) {
-    fgetc(fp);
-    ++ind;
-  }
+  int i = 0;
+  while(i++ < 2) fgetc(fp);
   int size = fgetc(fp) - 1;
   fgetc(fp);
-  std::string body;
-  this->read_frame_body(body, size);
-  strcpy(buffer, body.c_str());
-  fseek(fp, 0, SEEK_SET);
-  return 0;
+  return size;
 }
 
-int Id3v2_3::read_frame(char * buffer, const char * tag)
+int Id3v2_3::get_frame_size(FILE * fp)
+{
+  int i = 0;
+  while(i++ < 3) fgetc(fp);
+  int size = fgetc(fp);
+  size = size - this->eat_garbage();
+  return size;
+}
+
+int Id3v2_4::get_frame_size(FILE * fp)
+{
+  int i = 0;
+  while(i++ < 3) fgetc(fp);
+  int size = fgetc(fp);
+  size = size - this->eat_garbage();
+  return size;
+}
+
+int Id3v2::read_frame(char * buffer, const char * tag)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
-  int failed = this->eat_frame_header(tag, 4);
+  int failed = this->eat_frame_header(tag);
   if(failed) {
     return 1;
   }
-  int ind = 0;
-  while(ind < 3) {
-    fgetc(fp);
-    ++ind;
-  }
-  int size = fgetc(fp);
-  size = size - this->eat_garbage();
-  std::string body;
-  this->read_frame_body(body, size);
-  strcpy(buffer, body.c_str());
-  fseek(fp, 0, SEEK_SET);
-  return 0;
-}
-
-int Id3v2_4::read_frame(char * buffer, const char * tag)
-{
-  FILE * fp = (this->media_file)->get_file_pointer();
-  int failed = this->eat_frame_header(tag, 4);
-  if(failed) {
-    return 1;
-  }
-  int ind = 0;
-  while(ind < 3) {
-    fgetc(fp);
-    ++ind;
-  }
-  int size = fgetc(fp);
-  size = size - this->eat_garbage();
+  int size = this->get_frame_size(fp);
   std::string body;
   this->read_frame_body(body, size);
   strcpy(buffer, body.c_str());
