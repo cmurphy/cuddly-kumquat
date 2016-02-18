@@ -45,13 +45,26 @@ int Song::read_frame_body(std::string & body, int size)
   return 0;
 }
 
-int Song::read_frames(char * title, char * artist, char * album)
+int Song::read_frames()
 {
-  int succeeded = 0;
-  succeeded |= this->read_frame(title, this->title_identifier().c_str());
-  succeeded |= this->read_frame(artist, this->artist_identifier().c_str());
-  succeeded |= this->read_frame(album, this->album_identifier().c_str());
-  return succeeded;
+  char buffer[BUFFER_SIZE];
+  int failed = 0;
+  int return_val = 0;
+  failed = this->read_frame(buffer, this->title_identifier().c_str());
+  if (!failed) this->title = buffer;
+  return_val |= failed;
+  failed = this->read_frame(buffer, this->artist_identifier().c_str());
+  if (!failed) this->artist = buffer;
+  return_val |= failed;
+  failed = this->read_frame(buffer, this->album_identifier().c_str());
+  if (!failed) this->album = buffer;
+  return_val |= failed;
+  return return_val;
+}
+
+void Song::print()
+{
+  printf("%s, %s, %s\n", this->title.c_str(), this->artist.c_str(), this->album.c_str());
 }
 
 int Id3v1::read_frame(char * buffer, const char * tag)
@@ -259,8 +272,8 @@ int Mp4::read_frame(char * buffer, const char * tag)
   return 0;
 }
 
-int Mp4::read_frames(char * title, char * artist, char * album)
+int Mp4::read_frames()
 {
   this->ilst_size = this->seek_ilst();
-  return Song::read_frames(title, artist, album);
+  return Song::read_frames();
 }

@@ -6,9 +6,9 @@
 class Song
 {
   protected:
-    std::string title;
-    std::string artist;
-    std::string album;
+    std::string title = "title not found";
+    std::string artist = "artist not found";
+    std::string album = "album not found";
     virtual std::string title_identifier() = 0;
     virtual std::string artist_identifier() = 0;
     virtual std::string album_identifier() = 0;
@@ -18,7 +18,7 @@ class Song
     explicit Song(File * media_file);
     virtual ~Song();
     virtual int read_frame(char * buffer, const char * tag) = 0;
-    virtual int read_frames(char * title, char * artist, char * album);
+    virtual int read_frames();
     void print();
 
 };
@@ -123,6 +123,6 @@ class Mp4: public Song
     ~Mp4() {};
     int find_atom(const char * atom_name, int parent_size);
     int read_frame(char * buffer, const char * tag);
-    int read_frames(char * title, char * artist, char * album);
+    int read_frames();
 };
 #endif
