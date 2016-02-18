@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <string.h>
 #include <arpa/inet.h>
 
@@ -11,7 +12,7 @@
 int main(int argc, char ** argv)
 {
   if(argc < 2) {
-    fprintf(stderr, "Must provide file path to read.\n");
+    std::cerr << "Must provide file path to read." << std::endl;
     exit(1);
   }
   std::string file_name = argv[1];
@@ -35,7 +36,7 @@ int main(int argc, char ** argv)
       song = new Mp4(media_file);
       break;
     case MetadataFormat::ERROR:
-      printf("Could not recognize this file.\n");
+      std::cerr << "Could not recognize this file." << std::endl;
       exit(1);
   }
   int failed = 0;

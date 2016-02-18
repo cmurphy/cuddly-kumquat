@@ -55,7 +55,7 @@ int Song::read_frames()
 
 void Song::print()
 {
-  printf("%s, %s, %s\n", this->title.c_str(), this->artist.c_str(), this->album.c_str());
+  std::cout << this->title.c_str() << ", " <<  this->artist.c_str() << ", " << this->album.c_str() << std::endl;
 }
 
 int Id3v1::read_frame(std::string & buffer, const std::string & tag)
