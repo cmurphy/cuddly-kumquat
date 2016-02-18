@@ -12,7 +12,7 @@ class Song
     virtual std::string title_identifier() = 0;
     virtual std::string artist_identifier() = 0;
     virtual std::string album_identifier() = 0;
-    int read_frame_body(std::string & buffer, int size);
+    int read_frame_body(std::string & buffer, unsigned int size);
   public:
     File * media_file;
     explicit Song(File * media_file);

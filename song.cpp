@@ -14,20 +14,21 @@ Song::~Song()
 
 }
 
-int Song::read_frame_body(std::string & body, int size)
+int Song::read_frame_body(std::string & body, unsigned int size)
 {
-  char * buffer = new char[size+1];
+  std::string backup = body;
+  body = "";
   FILE * fp = (this->media_file)->get_file_pointer();
-  int buffer_index = 0;
-  int source_index = 0;
+  unsigned int source_index = 0;
   while(source_index < size) {
     char c = fgetc(fp);
     if(feof(fp)) {
+      body = backup;
       return 1;
     }
     if(c != 0) {
-      if(buffer_index <= BUFFER_SIZE) {
-        buffer[buffer_index++] = c;
+      if(body.length() <= BUFFER_SIZE) {
+        body += c;
       } else {
         break;
       }
@@ -35,13 +36,11 @@ int Song::read_frame_body(std::string & body, int size)
     ++source_index;
   }
   // Get rid of annoying space padding
-  if (buffer_index == size && buffer[buffer_index-1] == ' ') {
-    for(--buffer_index; buffer[buffer_index] == ' '; --buffer_index);
-    ++buffer_index;
+  if (body.length() == size) {
+    while (body.back() == ' ') {
+      body.pop_back();
+    }
   }
-  buffer[buffer_index] = 0;
-  body = buffer;
-  delete[] buffer;
   return 0;
 }
 
@@ -73,12 +72,12 @@ int Id3v2::eat_frame_header(const std::string & frame_id)
   int frame_id_length = frame_id.length();
   int current;
   int frame_id_byte_index = 0;
-  char * chars_read = (char*)malloc(sizeof(char) * (frame_id_length + 1));
+  std::string chars_read;
   while((current = ftell(fp)) < max_search && frame_id_byte_index < frame_id_length) {
     frame_id_byte_index = 0;
     char c;
     while((ftell(fp) - current) < frame_id_length && (c = fgetc(fp)) == frame_id[frame_id_byte_index]) {
-      chars_read[frame_id_byte_index] = c;
+      chars_read += c;
       ++frame_id_byte_index;
     }
     // There was a partial false positive, so backtrack
@@ -86,7 +85,8 @@ int Id3v2::eat_frame_header(const std::string & frame_id)
       ungetc(c, fp);
       --frame_id_byte_index;
       while(frame_id_byte_index > 0) {
-        ungetc(chars_read[frame_id_byte_index], fp);
+        ungetc(chars_read.back(), fp);
+        chars_read.pop_back();
         --frame_id_byte_index;
       }
     }
