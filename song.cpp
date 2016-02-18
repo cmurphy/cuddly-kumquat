@@ -47,11 +47,11 @@ int Song::read_frame_body(std::string & body, int size)
 
 int Song::read_frames(char * title, char * artist, char * album)
 {
-  int failed = 1;
-  failed &= this->read_frame(title, this->title_identifier().c_str());
-  failed &= this->read_frame(artist, this->artist_identifier().c_str());
-  failed &= this->read_frame(album, this->album_identifier().c_str());
-  return failed;
+  int succeeded = 0;
+  succeeded |= this->read_frame(title, this->title_identifier().c_str());
+  succeeded |= this->read_frame(artist, this->artist_identifier().c_str());
+  succeeded |= this->read_frame(album, this->album_identifier().c_str());
+  return succeeded;
 }
 
 int Id3v1::read_frame(char * buffer, const char * tag)
