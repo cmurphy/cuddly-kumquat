@@ -42,19 +42,20 @@ int Song::read_frame_body(std::string & body, int size)
   return 0;
 }
 
+int Song::read_frames(char * title, char * artist, char * album)
+{
+  int failed = 1;
+  failed &= this->read_frame(title, this->title_identifier().c_str());
+  failed &= this->read_frame(artist, this->artist_identifier().c_str());
+  failed &= this->read_frame(album, this->album_identifier().c_str());
+  return failed;
+}
+
 int Id3v1::read_frame(char * buffer, const char * tag)
 {
   std::string body;
   this->read_frame_body(body, 30);
   strcpy(buffer, body.c_str());
-  return 0;
-}
-
-int Id3v1::read_frames(char * title, char * artist, char * album)
-{
-  this->read_frame(title, "");
-  this->read_frame(artist, "");
-  this->read_frame(album, "");
   return 0;
 }
 
@@ -185,33 +186,6 @@ int Id3v2::read_frame(char * buffer, const char * tag)
   return 0;
 }
 
-int Id3v2_2::read_frames(char * title, char * artist, char * album)
-{
-  int failed = 1;
-  failed &= this->read_frame(title, "TT2");
-  failed &= this->read_frame(artist, "TP1");
-  failed &= this->read_frame(album, "TAL");
-  return failed;
-}
-
-int Id3v2_3::read_frames(char * title, char * artist, char * album)
-{
-  int failed = 1;
-  failed &= this->read_frame(title, "TIT2");
-  failed &= this->read_frame(artist, "TPE1");
-  failed &= this->read_frame(album, "TALB");
-  return failed;
-}
-
-int Id3v2_4::read_frames(char * title, char * artist, char * album)
-{
-  int failed = 1;
-  failed &= this->read_frame(title, "TIT2");
-  failed &= this->read_frame(artist, "TPE1");
-  failed &= this->read_frame(album, "TALB");
-  return failed;
-}
-
 int Mp4::find_atom(const char * atom_name, int parent_size)
 {
   FILE *fp = (this->media_file)->get_file_pointer();
@@ -253,11 +227,11 @@ int Mp4::seek_ilst()
   return ilst_size;
 }
 
-int Mp4::read_frame(char * buffer, const char * tag, int ilst_size)
+int Mp4::read_frame(char * buffer, const char * tag)
 {
   char atom_name[5] = "\0";
   FILE *fp = (this->media_file)->get_file_pointer();
-  if (! this->find_atom(tag, ilst_size)) {
+  if (! this->find_atom(tag, this->ilst_size)) {
     return 1;
   }
   // read data
@@ -278,10 +252,6 @@ int Mp4::read_frame(char * buffer, const char * tag, int ilst_size)
 
 int Mp4::read_frames(char * title, char * artist, char * album)
 {
-  int failed = 1;
-  int ilst_size = this->seek_ilst();
-  failed &= read_frame(title, "\xa9nam", ilst_size);
-  failed &= read_frame(artist, "\xa9""ART", ilst_size);
-  failed &= read_frame(album, "\xa9""alb", ilst_size);
-  return failed;
+  this->ilst_size = this->seek_ilst();
+  return Song::read_frames(title, artist, album);
 }
