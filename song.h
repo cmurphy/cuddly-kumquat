@@ -24,6 +24,7 @@ class Id3v1: public Song
   public:
     ~Id3v1() {};
     explicit Id3v1(File * media_file): Song(media_file) {};
+    int read_frame(char * buffer, const char * tag);
     int read_frames(char * title, char * artist, char * album);
 };
 

@@ -42,15 +42,19 @@ int Song::read_frame_body(std::string & body, int size)
   return 0;
 }
 
+int Id3v1::read_frame(char * buffer, const char * tag)
+{
+  std::string body;
+  this->read_frame_body(body, 30);
+  strcpy(buffer, body.c_str());
+  return 0;
+}
+
 int Id3v1::read_frames(char * title, char * artist, char * album)
 {
-  size_t len = 30;
-  this->read_frame_body(this->title, len);
-  this->read_frame_body(this->artist, len);
-  this->read_frame_body(this->album, len);
-  strcpy(title, this->title.c_str());
-  strcpy(artist, this->artist.c_str());
-  strcpy(album, this->album.c_str());
+  this->read_frame(title, "");
+  this->read_frame(artist, "");
+  this->read_frame(album, "");
   return 0;
 }
 
