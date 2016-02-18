@@ -27,8 +27,7 @@ class File
     unsigned char * format_header;
     int compare_extension(const std::string & extension);
   public:
-    explicit File(const char * file_path);
-    explicit File(std::string & file_path);
+    explicit File(const std::string & file_path);
     ~File();
     Container container_type();
     MetadataFormat metadata_type();

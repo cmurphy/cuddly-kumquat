@@ -14,7 +14,8 @@ int main(int argc, char ** argv)
     fprintf(stderr, "Must provide file path to read.\n");
     exit(1);
   }
-  File * media_file = new File(argv[1]);
+  std::string file_name = argv[1];
+  File * media_file = new File(file_name);
   MetadataFormat format = media_file->metadata_type();
   Song * song;
   switch(format) {

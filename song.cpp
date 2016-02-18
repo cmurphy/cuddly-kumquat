@@ -47,19 +47,11 @@ int Song::read_frame_body(std::string & body, int size)
 
 int Song::read_frames()
 {
-  char buffer[BUFFER_SIZE];
   int failed = 0;
-  int return_val = 0;
-  failed = this->read_frame(buffer, this->title_identifier().c_str());
-  if (!failed) this->title = buffer;
-  return_val |= failed;
-  failed = this->read_frame(buffer, this->artist_identifier().c_str());
-  if (!failed) this->artist = buffer;
-  return_val |= failed;
-  failed = this->read_frame(buffer, this->album_identifier().c_str());
-  if (!failed) this->album = buffer;
-  return_val |= failed;
-  return return_val;
+  failed |= this->read_frame(this->title, this->title_identifier());
+  failed |= this->read_frame(this->artist, this->artist_identifier());
+  failed |= this->read_frame(this->album, this->album_identifier());
+  return failed;
 }
 
 void Song::print()
@@ -67,20 +59,18 @@ void Song::print()
   printf("%s, %s, %s\n", this->title.c_str(), this->artist.c_str(), this->album.c_str());
 }
 
-int Id3v1::read_frame(char * buffer, const char * tag)
+int Id3v1::read_frame(std::string & buffer, const std::string & tag)
 {
-  std::string body;
-  int failed = this->read_frame_body(body, 30);
-  strcpy(buffer, body.c_str());
+  int failed = this->read_frame_body(buffer, 30);
   return failed;
 }
 
-int Id3v2::eat_frame_header(const char * frame_id)
+int Id3v2::eat_frame_header(const std::string & frame_id)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
   int start = ftell(fp);
   const int max_search = 500000;
-  int frame_id_length = strlen(frame_id);
+  int frame_id_length = frame_id.length();
   int current;
   int frame_id_byte_index = 0;
   char * chars_read = (char*)malloc(sizeof(char) * (frame_id_length + 1));
@@ -185,27 +175,25 @@ int Id3v2_4::get_unicode_encoding(FILE * fp)
   return 1;
 }
 
-int Id3v2::read_frame(char * buffer, const char * tag)
+int Id3v2::read_frame(std::string & buffer, const std::string & tag)
 {
   FILE * fp = (this->media_file)->get_file_pointer();
-  int failed = this->eat_frame_header(tag);
+  int failed = this->eat_frame_header(tag.c_str());
   if(failed) {
     return 1;
   }
   int size = this->get_frame_size(fp);
   this->get_frame_flags(fp);
   size -= this->get_unicode_encoding(fp);
-  std::string body;
-  failed = this->read_frame_body(body, size);
+  failed = this->read_frame_body(buffer, size);
   if(failed) {
     return 1;
   }
-  strcpy(buffer, body.c_str());
   fseek(fp, 0, SEEK_SET);
   return 0;
 }
 
-int Mp4::find_atom(const char * atom_name, int parent_size)
+int Mp4::find_atom(const std::string & atom_name, int parent_size)
 {
   FILE *fp = (this->media_file)->get_file_pointer();
   char buffer[5];
@@ -224,7 +212,7 @@ int Mp4::find_atom(const char * atom_name, int parent_size)
     if (feof(fp)) {
       return 1;
     }
-    if (! strncmp(buffer, atom_name, 4)) {
+    if (! strncmp(buffer, atom_name.c_str(), 4)) {
       break;
     } else {
       fseek(fp, size - 8, SEEK_CUR);
@@ -246,7 +234,7 @@ int Mp4::seek_ilst()
   return ilst_size;
 }
 
-int Mp4::read_frame(char * buffer, const char * tag)
+int Mp4::read_frame(std::string & buffer, const std::string & tag)
 {
   char atom_name[5] = "\0";
   FILE *fp = (this->media_file)->get_file_pointer();
@@ -263,12 +251,10 @@ int Mp4::read_frame(char * buffer, const char * tag)
   }
   // skip 00 00 00 01 00 00 00 00
   fseek(fp, 8, SEEK_CUR);
-  std::string body;
-  int failed = this->read_frame_body(body, size - 16);
+  int failed = this->read_frame_body(buffer, size - 16);
   if(failed) {
     return 1;
   }
-  strcpy(buffer, body.c_str());
   return 0;
 }
 

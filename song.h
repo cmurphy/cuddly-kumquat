@@ -17,7 +17,7 @@ class Song
     File * media_file;
     explicit Song(File * media_file);
     virtual ~Song();
-    virtual int read_frame(char * buffer, const char * tag) = 0;
+    virtual int read_frame(std::string & buffer, const std::string & tag) = 0;
     virtual int read_frames();
     void print();
 
@@ -36,7 +36,7 @@ class Id3v1: public Song
   public:
     ~Id3v1() {};
     explicit Id3v1(File * media_file): Song(media_file) {};
-    int read_frame(char * buffer, const char * tag);
+    int read_frame(std::string & buffer, const std::string & tag);
 };
 
 class Id3v2: public Song
@@ -48,8 +48,8 @@ class Id3v2: public Song
     explicit Id3v2(File * media_file): Song(media_file) {};
     ~Id3v2() {};
     virtual int get_frame_size(FILE * fp) = 0;
-    int read_frame(char * buffer, const char * tag);
-    int eat_frame_header(const char * frame_id);
+    int read_frame(std::string & buffer, const std::string & tag);
+    int eat_frame_header(const std::string & frame_id);
 };
 
 class Id3v2_2: public Id3v2
@@ -121,8 +121,8 @@ class Mp4: public Song
   public:
     explicit Mp4(File * media_file): Song(media_file) {};
     ~Mp4() {};
-    int find_atom(const char * atom_name, int parent_size);
-    int read_frame(char * buffer, const char * tag);
+    int find_atom(const std::string & atom_name, int parent_size);
+    int read_frame(std::string & buffer, const std::string & tag);
     int read_frames();
 };
 #endif

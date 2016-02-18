@@ -1,13 +1,7 @@
 #include "file.h"
 #include <string.h>
 
-File::File(const char * file_path)
-{
-  this->file_path = file_path;
-  this->file_pointer = fopen(file_path, "r");
-}
-
-File::File(std::string & file_path)
+File::File(const std::string & file_path)
 {
   this->file_path = file_path;
   this->file_pointer = fopen(file_path.c_str(), "r");
