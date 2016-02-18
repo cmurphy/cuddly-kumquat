@@ -22,6 +22,9 @@ int Song::read_frame_body(std::string & body, int size)
   int source_index = 0;
   while(source_index < size) {
     char c = fgetc(fp);
+    if(feof(fp)) {
+      return 1;
+    }
     if(c != 0) {
       if(buffer_index <= BUFFER_SIZE) {
         buffer[buffer_index++] = c;
@@ -54,9 +57,9 @@ int Song::read_frames(char * title, char * artist, char * album)
 int Id3v1::read_frame(char * buffer, const char * tag)
 {
   std::string body;
-  this->read_frame_body(body, 30);
+  int failed = this->read_frame_body(body, 30);
   strcpy(buffer, body.c_str());
-  return 0;
+  return failed;
 }
 
 int Id3v2::eat_frame_header(const char * frame_id)
@@ -180,7 +183,10 @@ int Id3v2::read_frame(char * buffer, const char * tag)
   this->get_frame_flags(fp);
   size -= this->get_unicode_encoding(fp);
   std::string body;
-  this->read_frame_body(body, size);
+  failed = this->read_frame_body(body, size);
+  if(failed) {
+    return 1;
+  }
   strcpy(buffer, body.c_str());
   fseek(fp, 0, SEEK_SET);
   return 0;
@@ -245,7 +251,10 @@ int Mp4::read_frame(char * buffer, const char * tag)
   // skip 00 00 00 01 00 00 00 00
   fseek(fp, 8, SEEK_CUR);
   std::string body;
-  this->read_frame_body(body, size - 16);
+  int failed = this->read_frame_body(body, size - 16);
+  if(failed) {
+    return 1;
+  }
   strcpy(buffer, body.c_str());
   return 0;
 }
