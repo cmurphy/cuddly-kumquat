@@ -2,6 +2,7 @@
 #define FILE_H
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
 enum class Container {
@@ -22,7 +23,7 @@ enum class MetadataFormat {
 class File
 {
   private:
-    FILE * file_pointer;
+    std::ifstream file_stream;
     std::string file_path;
     unsigned char * format_header;
     int compare_extension(const std::string & extension);
@@ -31,6 +32,6 @@ class File
     ~File();
     Container container_type();
     MetadataFormat metadata_type();
-    FILE * get_file_pointer();
+    std::ifstream * get_file_stream();
 };
 #endif

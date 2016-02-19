@@ -18,11 +18,11 @@ int Song::read_frame_body(std::string & body, unsigned int size)
 {
   std::string backup = body;
   body = "";
-  FILE * fp = (this->media_file)->get_file_pointer();
+  std::ifstream * fs = this->media_file->get_file_stream();
   unsigned int source_index = 0;
   while(source_index < size) {
-    char c = fgetc(fp);
-    if(feof(fp)) {
+    char c = fs->get();
+    if(fs->eof()) {
       body = backup;
       return 1;
     }
@@ -66,110 +66,126 @@ int Id3v1::read_frame(std::string & buffer, const std::string & tag)
 
 int Id3v2::eat_frame_header(const std::string & frame_id)
 {
-  FILE * fp = (this->media_file)->get_file_pointer();
-  int start = ftell(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  int start = fs->tellg();
   const int max_search = 500000;
   int frame_id_length = frame_id.length();
-  int current;
   int frame_id_byte_index = 0;
   std::string chars_read;
-  while((current = ftell(fp)) < max_search && frame_id_byte_index < frame_id_length) {
+  int current = fs->tellg();
+  while((current) < max_search && frame_id_byte_index < frame_id_length) {
     frame_id_byte_index = 0;
+    int frame_id_bytes_read = 0;
     char c;
-    while((ftell(fp) - current) < frame_id_length && (c = fgetc(fp)) == frame_id[frame_id_byte_index]) {
-      chars_read += c;
-      ++frame_id_byte_index;
+    while((frame_id_bytes_read) < frame_id_length) {
+      fs->get(c);
+      if((c) == frame_id[frame_id_byte_index]) {
+        chars_read += c;
+        ++frame_id_byte_index;
+        frame_id_bytes_read = (int)fs->tellg() - current;
+      } else {
+        break;
+      }
     }
     // There was a partial false positive, so backtrack
     if(frame_id_byte_index > 0 && frame_id_byte_index < frame_id_length) {
-      ungetc(c, fp);
+      fs->putback(c);
       --frame_id_byte_index;
       while(frame_id_byte_index > 0) {
-        ungetc(chars_read.back(), fp);
+        fs->putback(chars_read.back());
         chars_read.pop_back();
         --frame_id_byte_index;
       }
     }
+    current = fs->tellg();
   }
   if(current == max_search) {
     //TODO: turn this into debug logging
     //printf("Failed to find frame id %s.\n", frame_id);
-    fseek(fp, start, SEEK_SET);
+    fs->seekg(start, std::ios::beg);
     return 1;
   }
   return 0;
 }
 
-int Id3v2_2::get_frame_size(FILE * fp)
+int Id3v2_2::get_frame_size()
 {
   int size = 0;
-  fread(&size, 3, 1, fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->read((char*)&size, 3);
   size = ntohl(size);
   size >>= 8;
   return size;
 }
 
-void Id3v2_2::get_frame_flags(FILE * fp)
+void Id3v2_2::get_frame_flags()
 {
   // ID3v2.2 does not have any flag bytes
   return;
 }
 
-int Id3v2_2::get_unicode_encoding(FILE * fp)
+int Id3v2_2::get_unicode_encoding()
 {
   // Read either 00 or 01 indicating non-Unicode or Unicode
   // We don't do anything with this information for now
-  fgetc(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->get();
   return 1;
 }
 
-int Id3v2_3::get_frame_size(FILE * fp)
+int Id3v2_3::get_frame_size()
 {
   int size = 0;
-  fread(&size, 4, 1, fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->read((char*)&size, 4);
   size = ntohl(size);
   return size;
 }
 
-void Id3v2_3::get_frame_flags(FILE * fp)
+void Id3v2_3::get_frame_flags()
 {
   // ID3v2.3 has two flag bytes
   // We don't do anything with this information for now
-  fgetc(fp); fgetc(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->get(); fs->get();
 }
 
-int Id3v2_3::get_unicode_encoding(FILE * fp)
+int Id3v2_3::get_unicode_encoding()
 {
-  int is_unicode = fgetc(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  int is_unicode = fs->get();
   // If we're in Unicode, there are two more bytes indicating the unicode BOM
   if(is_unicode == 1) {
-    fgetc(fp); fgetc(fp);
+    fs->get(); fs->get();
     return 3;
   }
   return 1;
 }
 
-int Id3v2_4::get_frame_size(FILE * fp)
+int Id3v2_4::get_frame_size()
 {
   int size = 0;
-  fread(&size, 4, 1, fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->read((char*)&size, 4);
   size = ntohl(size);
   return size;
 }
 
-void Id3v2_4::get_frame_flags(FILE * fp)
+void Id3v2_4::get_frame_flags()
 {
   // ID3v2.3 has two flag bytes
   // We don't do anything with this information for now
-  fgetc(fp); fgetc(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  fs->get(); fs->get();
 }
 
-int Id3v2_4::get_unicode_encoding(FILE * fp)
+int Id3v2_4::get_unicode_encoding()
 {
-  int is_unicode = fgetc(fp);
+  std::ifstream * fs = this->media_file->get_file_stream();
+  int is_unicode = fs->get();
   // If we're in Unicode, there are two more bytes indicating the unicode BOM
   if(is_unicode == 1) {
-    fgetc(fp); fgetc(fp);
+    fs->get(); fs->get();
     return 3;
   }
   return 1;
@@ -177,47 +193,46 @@ int Id3v2_4::get_unicode_encoding(FILE * fp)
 
 int Id3v2::read_frame(std::string & buffer, const std::string & tag)
 {
-  FILE * fp = (this->media_file)->get_file_pointer();
   int failed = this->eat_frame_header(tag.c_str());
   if(failed) {
     return 1;
   }
-  int size = this->get_frame_size(fp);
-  this->get_frame_flags(fp);
-  size -= this->get_unicode_encoding(fp);
+  int size = this->get_frame_size();
+  this->get_frame_flags();
+  size -= this->get_unicode_encoding();
   failed = this->read_frame_body(buffer, size);
   if(failed) {
     return 1;
   }
-  fseek(fp, 0, SEEK_SET);
+  this->media_file->get_file_stream()->seekg(0, std::ios::beg);
   return 0;
 }
 
 int Mp4::find_atom(const std::string & atom_name, int parent_size)
 {
-  FILE *fp = (this->media_file)->get_file_pointer();
+  std::ifstream * fs = this->media_file->get_file_stream();
   char buffer[5];
-  int start = ftell(fp);
+  int start = fs->tellg();
   int size;
   while (1) {
-    fread(&size, sizeof(int), 1, fp);
-    if (feof(fp)) {
+    fs->read((char*)&size, sizeof(int));
+    if (fs->eof()) {
       return 1;
     }
     size = ntohl(size);
     if (size == 0) {
       continue;
     }
-    fread(buffer, sizeof(char), 4, fp);
-    if (feof(fp)) {
+    fs->read(buffer, 4);
+    if (fs->eof()) {
       return 1;
     }
     if (! strncmp(buffer, atom_name.c_str(), 4)) {
       break;
     } else {
-      fseek(fp, size - 8, SEEK_CUR);
+      fs->seekg(size - 8, std::ios::cur);
     }
-    if (ftell(fp) - start > parent_size) {
+    if ((int)fs->tellg() - start > parent_size) {
       return 1;
     }
   }
@@ -237,20 +252,20 @@ int Mp4::seek_ilst()
 int Mp4::read_frame(std::string & buffer, const std::string & tag)
 {
   char atom_name[5] = "\0";
-  FILE *fp = (this->media_file)->get_file_pointer();
+  std::ifstream * fs = this->media_file->get_file_stream();
   if (! this->find_atom(tag, this->ilst_size)) {
     return 1;
   }
   // read data
   int size;
-  fread(&size, sizeof(int), 1, fp);
+  fs->read((char*)&size, sizeof(int));
   size = ntohl(size);
-  fread(atom_name, sizeof(char), 4, fp);
+  fs->read(atom_name, sizeof(int));
   if (strncmp(atom_name, "data", 4)) {
     return 1;
   }
   // skip 00 00 00 01 00 00 00 00
-  fseek(fp, 8, SEEK_CUR);
+  fs->seekg(8, std::ios::cur);
   int failed = this->read_frame_body(buffer, size - 16);
   if(failed) {
     return 1;

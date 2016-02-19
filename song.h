@@ -42,12 +42,12 @@ class Id3v1: public Song
 class Id3v2: public Song
 {
   protected:
-    virtual void get_frame_flags(FILE * fp) = 0;
-    virtual int get_unicode_encoding(FILE * fp) = 0;
+    virtual void get_frame_flags() = 0;
+    virtual int get_unicode_encoding() = 0;
   public:
     explicit Id3v2(File * media_file): Song(media_file) {};
     ~Id3v2() {};
-    virtual int get_frame_size(FILE * fp) = 0;
+    virtual int get_frame_size() = 0;
     int read_frame(std::string & buffer, const std::string & tag);
     int eat_frame_header(const std::string & frame_id);
 };
@@ -62,12 +62,12 @@ class Id3v2_2: public Id3v2
     std::string title_identifier() { return this->title_id; };
     std::string artist_identifier() { return this->artist_id; };
     std::string album_identifier() { return this->album_id; };
-    void get_frame_flags(FILE * fp);
-    int get_unicode_encoding(FILE * fp);
+    void get_frame_flags();
+    int get_unicode_encoding();
   public:
     explicit Id3v2_2(File * media_file): Id3v2(media_file) {};
     ~Id3v2_2() {};
-    int get_frame_size(FILE * fp);
+    int get_frame_size();
 };
 
 class Id3v2_3: public Id3v2
@@ -80,12 +80,12 @@ class Id3v2_3: public Id3v2
     std::string title_identifier() { return this->title_id; };
     std::string artist_identifier() { return this->artist_id; };
     std::string album_identifier() { return this->album_id; };
-    void get_frame_flags(FILE * fp);
-    int get_unicode_encoding(FILE * fp);
+    void get_frame_flags();
+    int get_unicode_encoding();
   public:
     explicit Id3v2_3(File * media_file): Id3v2(media_file) {};
     ~Id3v2_3() {};
-    int get_frame_size(FILE * fp);
+    int get_frame_size();
 };
 
 class Id3v2_4: public Id3v2
@@ -98,12 +98,12 @@ class Id3v2_4: public Id3v2
     std::string title_identifier() { return this->title_id; };
     std::string artist_identifier() { return this->artist_id; };
     std::string album_identifier() { return this->album_id; };
-    void get_frame_flags(FILE * fp);
-    int get_unicode_encoding(FILE * fp);
+    void get_frame_flags();
+    int get_unicode_encoding();
   public:
     explicit Id3v2_4(File * media_file): Id3v2(media_file) {};
     ~Id3v2_4() {};
-    int get_frame_size(FILE * fp);
+    int get_frame_size();
 };
 
 class Mp4: public Song

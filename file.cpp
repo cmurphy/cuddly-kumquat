@@ -4,17 +4,17 @@
 File::File(const std::string & file_path)
 {
   this->file_path = file_path;
-  this->file_pointer = fopen(file_path.c_str(), "r");
+  this->file_stream.open(file_path.c_str(), std::ios::in | std::ios::binary);
 }
 
 File::~File()
 {
-  fclose(this->file_pointer);
+  this->file_stream.close();
 }
 
-FILE * File::get_file_pointer()
+std::ifstream * File::get_file_stream()
 {
-  return this->file_pointer;
+  return &this->file_stream;
 }
 
 int File::compare_extension(const std::string & extension)
@@ -40,9 +40,9 @@ MetadataFormat File::metadata_type()
 {
   Container container = this->container_type();
   if (container == Container::MP3) {
-    fseek(this->get_file_pointer(), 0, SEEK_SET);
+    this->get_file_stream()->seekg(0, std::ios::beg);
     char buffer[5];
-    fgets(buffer, 5, this->get_file_pointer());
+    this->get_file_stream()->read(buffer, 4);
     if (strncmp(buffer, "ID3", 3) == 0) {
       if (buffer[3] == 2) {
         return MetadataFormat::ID3V2_2;
@@ -55,8 +55,8 @@ MetadataFormat File::metadata_type()
       }
     } else {
       // TODO: check for TAG at SEEK_END-128
-      fseek(this->get_file_pointer(), -128, SEEK_END);
-      fgets(buffer, 4, this->get_file_pointer());
+      this->get_file_stream()->seekg(-128, std::ios::end);
+      this->get_file_stream()->read(buffer, 3);
       if (strncmp(buffer, "TAG", 3) == 0) {
         return MetadataFormat::ID3V1;
       } else {
