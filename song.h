@@ -2,6 +2,7 @@
 #define SONG_H
 
 #include "file.h"
+#include <arpa/inet.h>
 
 class Song
 {

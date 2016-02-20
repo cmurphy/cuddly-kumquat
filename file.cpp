@@ -1,5 +1,4 @@
 #include "file.h"
-#include <string.h>
 
 File::File(const std::string & file_path)
 {

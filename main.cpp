@@ -1,9 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
-#include <string.h>
-#include <arpa/inet.h>
-
 #include "file.h"
 #include "song.h"
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <string.h>
 
 enum class Container {
   ERROR = -1,

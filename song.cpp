@@ -1,6 +1,4 @@
 #include "song.h"
-#include <string.h>
-#include <arpa/inet.h>
 
 #define BUFFER_SIZE 100
 
